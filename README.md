@@ -2,6 +2,8 @@ __This software is ALPHA.__
 
 # HAP ToDo
 
+[![Build Status](https://travis-ci.org/alexanderkiel/hap-todo.svg?branch=master)](https://travis-ci.org/alexanderkiel/hap-todo)
+
 Example ToDo Service demonstrating HAP.
 
 ## Usage with Leiningen
