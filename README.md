@@ -25,7 +25,9 @@ You can start a REPL with `lein repl`. After it is up, go into the user
 namespace which is located in under `dev`. There is a comment block
 "Init Development". Just invoke the function:
 
-    (startup)
+```clojure
+(startup)
+```
     
 You should be able to see the ToDo service running at port 8080. If you like to 
 specify a different port, you can do it in the `.lein-env` file like so
@@ -36,7 +38,7 @@ specify a different port, you can do it in the `.lein-env` file like so
 
 ## License
 
-Copyright © 2015 FIXME
+Copyright © 2015 Alexander Kiel
 
 Distributed under the Eclipse Public License, the same as Clojure.
 
