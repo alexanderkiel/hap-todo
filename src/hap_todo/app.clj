@@ -15,11 +15,14 @@
 (defn wrap-path-for [handler path-for]
   (fn [req] (handler (assoc req :path-for path-for))))
 
-(defnk app [:as opts]
+(defn wrap-db [handler db]
+  (fn [req] (handler (assoc req :db db))))
+
+(defnk app [db :as opts]
   (let [routes (routes)
-        path-for (path-for routes)
-        opts (assoc opts :path-for path-for)]
+        path-for (path-for routes)]
     (-> (bidi-ring/make-handler routes (handlers opts))
         (wrap-path-for path-for)
+        (wrap-db db)
         (wrap-hap {:up-href (path-for :service-document-handler)})
         (wrap-cors))))

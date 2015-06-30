@@ -6,6 +6,7 @@
 
 (defn create [env]
   (-> (assoc env :app app)
+      (assoc :db (atom {}))
       (assoc :version (:hap-todo-version env))
       (update :ip (fnil identity "0.0.0.0"))
       (update :port (fnil parse-long "8080"))
