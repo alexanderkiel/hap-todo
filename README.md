@@ -4,7 +4,7 @@ __This software is ALPHA.__
 
 [![Build Status](https://travis-ci.org/alexanderkiel/hap-todo.svg?branch=master)](https://travis-ci.org/alexanderkiel/hap-todo)
 
-Example ToDo Service demonstrating HAP.
+Example ToDo Service demonstrating [HAP][2].
 
 ## Usage with Leiningen
          
@@ -45,3 +45,4 @@ Copyright © 2015 Alexander Kiel
 Distributed under the Eclipse Public License, the same as Clojure.
 
 [1]: <https://github.com/ddollar/foreman>
+[2]: <https://github.com/alexanderkiel/hap-spec>
