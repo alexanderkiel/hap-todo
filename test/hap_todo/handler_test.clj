@@ -2,7 +2,8 @@
   (:use plumbing.core)
   (:require [clojure.edn :as edn]
             [clojure.test :refer :all]
-            [hap-todo.handler :refer :all]))
+            [hap-todo.handler :refer :all]
+            [hap-todo.api :as api]))
 
 (defn- path-for [handler & args] (pr-str {:handler handler :args args}))
 
@@ -10,9 +11,7 @@
 (def ^:private id-1 #uuid "68f97840-fc7b-4943-9923-436d60477c9a")
 (def ^:private id-2 #uuid "348fc80a-fdb9-44ab-8965-b38b85756b37")
 
-(defn- db [& items]
-  (atom {:items (for-map [item items] (:id item) item)
-         :insert-order (mapv :id items)}))
+(defn- db [& items] (atom (apply api/db items)))
 
 (defn- href [resp rel]
   (edn/read-string (-> resp :body :links rel :href)))
@@ -101,7 +100,7 @@
                  :db db)]
       (is (= 204 (:status resp)))
       (is (empty? (:items @db)))
-      (is (empty? (:insert-order @db))))))
+      (is (empty? (:all @db))))))
 
 (deftest item-list-handler-test
 
@@ -140,14 +139,6 @@
       (is (second (:args (location resp))))
       (is (nil? (:body resp)))
 
-      (testing ":insert-order is a vector containing one id"
-        (is (vector? (:insert-order @db)))
-        (is (= 1 (count (:insert-order @db)))))
-
       (testing ":items is a map containing one item"
         (is (map? (:items @db)))
         (is (= 1 (count (:items @db))))))))
-
-(deftest delete-item-test
-  (testing ":insert-order remains a vector"
-    (is (vector? (:insert-order (delete-item @(db {:id id}) id))))))

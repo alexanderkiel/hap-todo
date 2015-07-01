@@ -2,11 +2,12 @@
   (:use plumbing.core)
   (:require [org.httpkit.server :refer [run-server]]
             [hap-todo.app :refer [app]]
+            [hap-todo.api :as api]
             [hap-todo.util :refer [parse-long]]))
 
 (defn create [env]
   (-> (assoc env :app app)
-      (assoc :db (atom {:items {} :insert-order []}))
+      (assoc :db (atom (api/db)))
       (assoc :version (:hap-todo-version env))
       (update :ip (fnil identity "0.0.0.0"))
       (update :port (fnil parse-long "8080"))

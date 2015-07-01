@@ -2,7 +2,8 @@
   (:use plumbing.core)
   (:require [liberator.core :as l :refer [resource to-location]]
             [liberator.representation :refer [Representation as-response]]
-            [pandect.algo.md5 :refer [md5]])
+            [pandect.algo.md5 :refer [md5]]
+            [hap-todo.api :as api])
   (:import [java.util UUID])
   (:refer-clojure :exclude [error-handler]))
 
@@ -134,6 +135,14 @@
         {:up {:href (path-for :service-document-handler)}
          :self {:href (item-path path-for item)}})))
 
+(defn render-embedded-item-xf
+  "Returns a transducer which maps over a coll containing maps with :id."
+  [path-for db]
+  (comp
+    (map :id)
+    (map (:items @db))
+    (map #(render-embedded-item path-for %))))
+
 (defnk render-item-list [[:request db path-for]]
   {:links
    {:up {:href (path-for :service-document-handler)}
@@ -143,13 +152,7 @@
     (render-create-item-form path-for)}
    :embedded
    {:todo/items
-    (into [] (comp
-                   (map (:items @db))
-                   (map #(render-embedded-item path-for %))) (:insert-order @db))}})
-
-(defn add-item [db {:keys [id] :as item}]
-  (-> (assoc-in db [:items id] item)
-      (update :insert-order #(conj % id))))
+    (into [] (render-embedded-item-xf path-for db) (:all @db))}})
 
 (def item-list-handler
   (resource
@@ -166,7 +169,7 @@
     :post!
     (fnk [[:request db [:params label]]]
       (let [id (UUID/randomUUID) item {:id id :label label}]
-        (swap! db add-item item)
+        (swap! db api/add-item item)
         {:item item}))
 
     :location (fnk [item [:request path-for]] (item-path path-for item))
@@ -176,10 +179,6 @@
 (defnk render-item [item [:request path-for]]
   (assoc (render-embedded-item path-for item)
     :opts [:delete]))
-
-(defn delete-item [db id]
-  (-> (dissoc-in db [:items id])
-      (update :insert-order #(filterv (partial not= id) %))))
 
 (def item-handler
   (resource
@@ -205,8 +204,8 @@
       (swap! db #(assoc-in % [:items (:id item)] new-entity)))
 
     :delete!
-    (fnk [[:request db] [:item id]]
-      (swap! db delete-item id))
+    (fnk [[:request db] item]
+      (swap! db api/delete-item item))
 
     :handle-ok render-item
 
