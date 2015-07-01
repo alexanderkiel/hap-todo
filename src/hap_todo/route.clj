@@ -5,4 +5,6 @@
   ["/"
    {"" :service-document-handler
     ["items/" [bidi/uuid :id]] :item-handler
-    "items" :item-list-handler}])
+    ["items/" [bidi/uuid :id] "/state"] :item-state-handler
+    "items" :item-list-handler
+    "item-state-profile" :item-state-profile-handler}])

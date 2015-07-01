@@ -1,6 +1,7 @@
 (ns hap-todo.handler
   (:use plumbing.core)
-  (:require [liberator.core :as l :refer [resource to-location]]
+  (:require [schema.core :as s]
+            [liberator.core :as l :refer [resource to-location]]
             [liberator.representation :refer [Representation as-response]]
             [pandect.algo.md5 :refer [md5]]
             [hap-todo.api :as api])
@@ -28,15 +29,25 @@
   [request :as ctx]
   (if (or (not (l/=method :put ctx)) (l/header-exists? "if-match" ctx))
     (when (l/=method :put ctx)
-      (if-let [params (:params request)]
-        [false {:new-entity params}]
+      (if-let [body (:body request)]
+        [false {:new-entity body}]
         {:error "Missing request body."}))
     {:error "Require conditional update."}))
 
-(defn- entity-processable [& params]
+(defn validate [schema x]
+  (if-let [error (s/check schema x)]
+    [false {:error (str "Unprocessable Entity: " (pr-str error))}]
+    true))
+
+(defn- entity-processable [schema]
   (fn [ctx]
     (or (not (l/=method :put ctx))
-        (every? identity (map #(get-in ctx [:new-entity %]) params)))))
+        (validate schema (:new-entity ctx)))))
+
+(defn- form-params-valid [schema]
+  (fnk [[:request params request-method]]
+    (or (not= :post request-method)
+        (validate schema params))))
 
 (defn- error-body [path-for msg]
   {:links {:up {:href (path-for :service-document-handler)}}
@@ -127,13 +138,18 @@
 (defn item-path [path-for item]
   (path-for :item-handler :id (:id item)))
 
+(defn item-state-path [path-for item]
+  (path-for :item-state-handler :id (:id item)))
+
 (defn render-embedded-item [path-for item]
   {:pre [(map? item)]}
-  (-> (dissoc item :id)
+  (-> (dissoc item :id :rank)
       (assoc
         :links
         {:up {:href (path-for :service-document-handler)}
-         :self {:href (item-path path-for item)}})))
+         :self {:href (item-path path-for item)}
+         :todo/item-state {:href (item-state-path path-for item)}}
+        :ops [:delete])))
 
 (defn render-embedded-item-xf
   "Returns a transducer which maps over a coll containing maps with :id."
@@ -158,17 +174,11 @@
   (resource
     list-resource-defaults
 
-    :processable?
-    (fnk [[:request request-method params]]
-      (or (= :get request-method)
-          (:label params)
-          [false {:error (str "Param :label missing in "
-                              (or (keys params) "empty")
-                              " params.")}]))
+    :processable? (form-params-valid {:label s/Str})
 
     :post!
     (fnk [[:request db [:params label]]]
-      (let [id (UUID/randomUUID) item {:id id :label label}]
+      (let [id (UUID/randomUUID) item {:id id :label label :state :active}]
         (swap! db api/add-item item)
         {:item item}))
 
@@ -177,19 +187,18 @@
     :handle-ok render-item-list))
 
 (defnk render-item [item [:request path-for]]
-  (assoc (render-embedded-item path-for item)
-    :opts [:delete]))
+  (render-embedded-item path-for item))
 
 (def item-handler
   (resource
     entity-resource-defaults
 
+    :allowed-methods [:get :delete]
+
     :exists?
     (fnk [[:request db [:params id]]]
       (when-let [item (get-in @db [:items id])]
         {:item item}))
-
-    :processable? (entity-processable :label)
 
     ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
@@ -198,10 +207,6 @@
         (letk [[item] ctx]
           (md5 (str (:media-type representation)
                     (:label item))))))
-    :put!
-    (fnk [[:request db] item new-entity]
-      ;;TODO check for item equality inside swap
-      (swap! db #(assoc-in % [:items (:id item)] new-entity)))
 
     :delete!
     (fnk [[:request db] item]
@@ -212,9 +217,77 @@
     :handle-not-found
     (fnk [[:request path-for]] (error-body path-for "Item not found."))))
 
+(defnk render-item-state [item [:request path-for]]
+  (assoc (select-keys item [:state])
+    :links
+    {:up {:href (item-path path-for item)}
+     :self {:href (item-state-path path-for item)}
+     :profile {:href (path-for :item-state-profile-handler)}}
+    :ops [:update]))
+
+(def ^:private item-state-schema {:state (s/enum :active :completed)})
+
+(def item-state-handler
+  (resource
+    entity-resource-defaults
+
+    :allowed-methods [:get :put]
+
+    :exists?
+    (fnk [[:request db [:params id]]]
+      (when-let [item (get-in @db [:items id])]
+        {:item item}))
+
+    :processable? (entity-processable item-state-schema)
+
+    ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
+    :etag
+    (fnk [representation {status 200} :as ctx]
+      (when (= 200 status)
+        (letk [[item] ctx]
+          (md5 (str (:media-type representation)
+                    (:state item))))))
+
+    :put!
+    (fnk [[:request db] item new-entity]
+      ;;TODO check for item equality inside swap
+      (swap! db api/update-item-state item (:state new-entity)))
+
+    :handle-ok render-item-state
+
+    :handle-not-found
+    (fnk [[:request path-for]] (error-body path-for "Item not found."))))
+
+(defnk render-item-state-profile [profile [:request path-for]]
+  (assoc profile
+    :links
+    {:up {:href (path-for :service-document-handler)}
+     :self {:href (path-for :item-state-profile-handler)}}))
+
+(def item-state-profile-handler
+  (resource
+    resource-defaults
+
+    :exists?
+    {:profile {:schema (s/explain item-state-schema)}}
+
+    ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
+    :etag
+    (fnk [representation {status 200} :as ctx]
+      (when (= 200 status)
+        (letk [[profile] ctx]
+          (md5 (str (:media-type representation) profile)))))
+
+    :handle-ok render-item-state-profile
+
+    :handle-not-found
+    (fnk [[:request path-for]] (error-body path-for "Item state profile not found."))))
+
 ;; ---- Handlers --------------------------------------------------------------
 
 (defnk handlers [version]
   {:service-document-handler (service-document-handler version)
    :item-list-handler item-list-handler
-   :item-handler item-handler})
+   :item-handler item-handler
+   :item-state-handler item-state-handler
+   :item-state-profile-handler item-state-profile-handler})

@@ -24,3 +24,10 @@
   [db item]
   (-> (dissoc-in db [:items (:id item)])
       (update :all #(disj % (select-keys item [:id :rank])))))
+
+(defn- concurrent-update-ex-info [{:keys [id] :as item}]
+  (ex-info (str "Concurrent update on item " id " detected.") {:item item}))
+
+(defn update-item-state [db {id :id old-state :state :as item} new-state]
+  (->> #(if (= old-state %) new-state (throw (concurrent-update-ex-info item)))
+       (update-in db [:items id :state])))
