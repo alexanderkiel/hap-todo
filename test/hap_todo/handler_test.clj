@@ -2,20 +2,26 @@
   (:use plumbing.core)
   (:require [clojure.edn :as edn]
             [clojure.test :refer :all]
-            [hap-todo.handler :refer :all])
-  (:import [java.util UUID]))
-
-(defn- uuid [s] (UUID/fromString s))
+            [hap-todo.handler :refer :all]))
 
 (defn- path-for [handler & args] (pr-str {:handler handler :args args}))
 
-(def ^:private id (uuid "746c82be-e6ec-4dd6-b5e4-4dfe1f4037e0"))
+(def ^:private id #uuid "746c82be-e6ec-4dd6-b5e4-4dfe1f4037e0")
+(def ^:private id-1 #uuid "68f97840-fc7b-4943-9923-436d60477c9a")
+(def ^:private id-2 #uuid "348fc80a-fdb9-44ab-8965-b38b85756b37")
 
 (defn- db [& items]
-  (atom (for-map [item items] (:id item) item)))
+  (atom {:items (for-map [item items] (:id item) item)
+         :insert-order (mapv :id items)}))
 
 (defn- href [resp]
   (edn/read-string (-> resp :body :links :self :href)))
+
+(defn- embedded [resp rel]
+  (-> resp :body :embedded rel))
+
+(defn- error [resp]
+  (-> resp :body :error))
 
 (defn- location [resp]
   (edn/read-string (get-in resp [:headers "Location"])))
@@ -57,14 +63,14 @@
     (let [resp (execute item-handler :put
                  :params {:id id})]
       (is (= 400 (:status resp)))
-      (is (= "Require conditional update." (:error (:body resp))))))
+      (is (= "Require conditional update." (error resp)))))
 
   (testing "Update fails on missing label"
     (let [resp (execute item-handler :put
                  :params {:id id}
                  [:headers "if-match"] "\"foo\"")]
       (is (= 422 (:status resp)))
-      (is (= "Unprocessable Entity" (:error (:body resp))))))
+      (is (= "Unprocessable Entity" (error resp)))))
 
   (testing "Update fails on ETag missmatch"
     (let [resp (execute item-handler :put
@@ -72,7 +78,7 @@
                  :db (db {:id id})
                  [:headers "if-match"] "\"foo\"")]
       (is (= 412 (:status resp)))
-      (is (= "Precondition Failed" (:error (:body resp))))))
+      (is (= "Precondition Failed" (error resp)))))
 
   (testing "Update succeeds"
     (let [db (db {:id id})
@@ -83,14 +89,46 @@
       (is (= 204 (:status resp))))))
 
 (deftest item-list-handler-test
+
+  (testing "List on empty DB return an empty list"
+    (let [resp (execute item-list-handler :get
+                 :db (db))]
+      (is (= 200 (:status resp)))
+      (is (empty? (embedded resp :todo/items)))))
+
+  (testing "List on DB with one item returns a list with this item"
+    (let [resp (execute item-list-handler :get
+                 :db (db {:id id :label "label-021742"}))]
+      (is (= 200 (:status resp)))
+      (is (= 1 (count (embedded resp :todo/items))))
+      (is (= "label-021742" (:label (first (embedded resp :todo/items)))))))
+
+  (testing "List on DB with two items orders them by insertion order"
+    (let [resp (execute item-list-handler :get
+                 :db (db {:id id-1 :label "a"} {:id id-2 :label "b"}))]
+      (is (= 200 (:status resp)))
+      (is (= 2 (count (embedded resp :todo/items))))
+      (is (= "a" (:label (first (embedded resp :todo/items)))))
+      (is (= "b" (:label (second (embedded resp :todo/items)))))))
+
   (testing "Create without label fails"
     (let [resp (execute item-list-handler :post)]
-      (is (= 422 (:status resp)))))
+      (is (= 422 (:status resp)))
+      (is (= "Param :label missing in empty params." (error resp)))))
 
   (testing "Create succeeds"
-    (let [resp (execute item-list-handler :post
+    (let [db (db)
+          resp (execute item-list-handler :post
                  :params {:label "label-152935"}
-                 :db (db))]
+                 :db db)]
       (is (= 201 (:status resp)))
       (is (second (:args (location resp))))
-      (is (nil? (:body resp))))))
+      (is (nil? (:body resp)))
+
+      (testing ":insert-order is a vector containing one id"
+        (is (vector? (:insert-order @db)))
+        (is (= 1 (count (:insert-order @db)))))
+
+      (testing ":items is a map containing one item"
+        (is (map? (:items @db)))
+        (is (= 1 (count (:items @db))))))))

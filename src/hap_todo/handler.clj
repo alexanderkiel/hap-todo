@@ -79,13 +79,15 @@
     :handle-not-found
     (fnk [[:request path-for]] (error-body path-for "Not Found"))))
 
-(def create-resource-defaults
+(def list-resource-defaults
   (assoc
     resource-defaults
 
-    :allowed-methods [:post]
+    :allowed-methods [:get :post]
 
-    :can-post-to-missing? false))
+    :can-post-to-missing? false
+
+    :handle-unprocessable-entity (error-handler "Unprocessable Entity")))
 
 ;; ---- Service Document ------------------------------------------------------
 
@@ -101,7 +103,8 @@
     {:name "HAP ToDo"
      :version version
      :links
-     {:self {:href (path-for :service-document-handler)}}
+     {:self {:href (path-for :service-document-handler)}
+      :todo/items {:href (path-for :item-list-handler)}}
      :forms
      {:todo/create-item
       (render-create-item-form path-for)}}))
@@ -123,28 +126,52 @@
 (defn item-path [path-for item]
   (path-for :item-handler :id (:id item)))
 
+(defn render-embedded-item [path-for item]
+  {:pre [(map? item)]}
+  (-> (dissoc item :id)
+      (assoc
+        :links
+        {:up {:href (path-for :service-document-handler)}
+         :self {:href (item-path path-for item)}})))
+
+(defnk render-item-list [[:request db path-for]]
+  {:links
+   {:up {:href (path-for :service-document-handler)}
+    :self {:href (path-for :item-list-handler)}}
+   :forms
+   {:todo/create-item
+    (render-create-item-form path-for)}
+   :embedded
+   {:todo/items
+    (into [] (comp
+                   (map (:items @db))
+                   (map #(render-embedded-item path-for %))) (:insert-order @db))}})
+
 (def item-list-handler
   (resource
-    create-resource-defaults
+    list-resource-defaults
 
     :processable?
-    (fnk [[:request params]]
-      (or (:label params)
-          [false {:error (str "Param :label missing in " (keys params))}]))
+    (fnk [[:request request-method params]]
+      (or (= :get request-method)
+          (:label params)
+          [false {:error (str "Param :label missing in "
+                              (or (keys params) "empty")
+                              " params.")}]))
 
     :post!
     (fnk [[:request db [:params label]]]
       (let [id (UUID/randomUUID) item {:id id :label label}]
-        (swap! db #(assoc % id item))
+        (swap! db (fn [db] (-> (assoc-in db [:items id] item)
+                               (update :insert-order #(conj % id)))))
         {:item item}))
 
-    :location (fnk [item [:request path-for]] (item-path path-for item))))
+    :location (fnk [item [:request path-for]] (item-path path-for item))
+
+    :handle-ok render-item-list))
 
 (defnk render-item [item [:request path-for]]
-  (assoc item
-    :links
-    {:up {:href (path-for :service-document-handler)}
-     :self {:href (item-path path-for item)}}))
+  (render-embedded-item path-for item))
 
 (def item-handler
   (resource
@@ -152,7 +179,7 @@
 
     :exists?
     (fnk [[:request db [:params id]]]
-      (when-let [item (@db id)]
+      (when-let [item (get-in @db [:items id])]
         {:item item}))
 
     :processable? (entity-processable :label)
@@ -167,7 +194,7 @@
     :put!
     (fnk [[:request db] item new-entity]
       ;;TODO check for item equality inside swap
-      (swap! db #(assoc % (:id item) new-entity)))
+      (swap! db #(assoc-in % [:items (:id item)] new-entity)))
 
     :delete!
     (fnk [[:request db] [:item id]]
