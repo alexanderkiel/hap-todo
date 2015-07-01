@@ -4,11 +4,11 @@
 
 (deftest add-item-test
   (testing "after adding an item"
-    (let [db (add-item (db) {:id "094806"})]
+    (let [id "094806" db (add-item (db) {:id id})]
       (testing ":next-rank is 2"
         (is (= 2 (:next-rank db))))
       (testing "item has rank 1"
-        (is (= 1 (:rank ((:items db) "094806")))))
+        (is (= 1 (:rank ((:items db) id)))))
       (testing ":all remains sorted"
         (is (sorted? (:all db)))))))
 
