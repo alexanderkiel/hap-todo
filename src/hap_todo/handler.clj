@@ -147,6 +147,10 @@
                    (map (:items @db))
                    (map #(render-embedded-item path-for %))) (:insert-order @db))}})
 
+(defn add-item [db {:keys [id] :as item}]
+  (-> (assoc-in db [:items id] item)
+      (update :insert-order #(conj % id))))
+
 (def item-list-handler
   (resource
     list-resource-defaults
@@ -162,8 +166,7 @@
     :post!
     (fnk [[:request db [:params label]]]
       (let [id (UUID/randomUUID) item {:id id :label label}]
-        (swap! db (fn [db] (-> (assoc-in db [:items id] item)
-                               (update :insert-order #(conj % id)))))
+        (swap! db add-item item)
         {:item item}))
 
     :location (fnk [item [:request path-for]] (item-path path-for item))
@@ -171,7 +174,12 @@
     :handle-ok render-item-list))
 
 (defnk render-item [item [:request path-for]]
-  (render-embedded-item path-for item))
+  (assoc (render-embedded-item path-for item)
+    :opts [:delete]))
+
+(defn delete-item [db id]
+  (-> (dissoc-in db [:items id])
+      (update :insert-order #(filterv (partial not= id) %))))
 
 (def item-handler
   (resource
@@ -198,7 +206,7 @@
 
     :delete!
     (fnk [[:request db] [:item id]]
-      (swap! db #(dissoc % id)))
+      (swap! db delete-item id))
 
     :handle-ok render-item
 

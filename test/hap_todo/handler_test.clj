@@ -14,8 +14,8 @@
   (atom {:items (for-map [item items] (:id item) item)
          :insert-order (mapv :id items)}))
 
-(defn- href [resp]
-  (edn/read-string (-> resp :body :links :self :href)))
+(defn- href [resp rel]
+  (edn/read-string (-> resp :body :links rel :href)))
 
 (defn- embedded [resp rel]
   (-> resp :body :embedded rel))
@@ -52,11 +52,17 @@
 
     (is (= 200 (:status resp)))
 
-    (testing "self link"
-      (is (= :item-handler (:handler (href resp))))
-      (is (= [:id id] (:args (href resp)))))
+    (testing "contains a self link"
+      (is (= :item-handler (:handler (href resp :self))))
+      (is (= [:id id] (:args (href resp :self)))))
 
-    (testing "ETag"
+    (testing "contains an up link"
+      (is (= :service-document-handler (:handler (href resp :up)))))
+
+    (testing "contains the delete operation"
+      (is (some #{:delete} (-> resp :body :opts))))
+
+    (testing "contains an ETag"
       (is (get-in resp [:headers "ETag"]))))
 
   (testing "Non-conditional update fails"
@@ -86,7 +92,16 @@
                  :params {:id id :label "foo"}
                  :db db
                  [:headers "if-match"] (etag db id))]
-      (is (= 204 (:status resp))))))
+      (is (= 204 (:status resp)))))
+
+  (testing "Delete succeeds"
+    (let [db (db {:id id})
+          resp (execute item-handler :delete
+                 :params {:id id}
+                 :db db)]
+      (is (= 204 (:status resp)))
+      (is (empty? (:items @db)))
+      (is (empty? (:insert-order @db))))))
 
 (deftest item-list-handler-test
 
@@ -132,3 +147,7 @@
       (testing ":items is a map containing one item"
         (is (map? (:items @db)))
         (is (= 1 (count (:items @db))))))))
+
+(deftest delete-item-test
+  (testing ":insert-order remains a vector"
+    (is (vector? (:insert-order (delete-item @(db {:id id}) id))))))
