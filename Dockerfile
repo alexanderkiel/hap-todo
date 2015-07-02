@@ -4,7 +4,6 @@ ENV LEIN_ROOT true
 ADD https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein /usr/local/bin/lein
 RUN chmod +x /usr/local/bin/lein
 
-COPY resources /app/resources
 COPY src /app/src
 COPY project.clj /app/
 
