@@ -7,12 +7,14 @@
   :min-lein-version "2.0.0"
 
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [prismatic/plumbing "0.4.3"]
+                 [prismatic/plumbing "0.4.4"]
                  [http-kit "2.1.18"]
                  [org.clojars.akiel/ring-hap "0.1-SNAPSHOT"]
-                 [bidi "1.18.11" :exclusions [org.clojure/clojurescript]]
+                 [bidi "1.18.11" :exclusions [org.clojure/clojurescript
+                                              com.cemerick/clojurescript.test]]
                  [liberator "0.13"]
-                 [pandect "0.5.2"]
+                 [pandect "0.5.2"
+                  :exclusions [org.bouncycastle/bcprov-jdk15on potemkin]]
                  [environ "1.0.0"]]
 
   :profiles {:dev
