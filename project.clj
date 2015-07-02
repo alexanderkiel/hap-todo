@@ -6,7 +6,7 @@
 
   :min-lein-version "2.0.0"
 
-  :dependencies [[org.clojure/clojure "1.7.0-RC2"]
+  :dependencies [[org.clojure/clojure "1.7.0"]
                  [prismatic/plumbing "0.4.3"]
                  [http-kit "2.1.18"]
                  [org.clojars.akiel/ring-hap "0.1-SNAPSHOT"]
@@ -17,8 +17,7 @@
 
   :profiles {:dev
              {:source-paths ["dev"]
-              :dependencies [[org.clojure/tools.namespace "0.2.4"]
-                             [ring/ring-mock "0.2.0"]]
+              :dependencies [[org.clojure/tools.namespace "0.2.4"]]
               :global-vars {*print-length* 20}}
 
              :production
