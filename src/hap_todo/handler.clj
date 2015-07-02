@@ -107,7 +107,7 @@
   {:href (path-for :item-list-handler)
    :title "Create Item"
    :params
-   {:label {:type 'Str
+   {:label {:type s/Str
             :desc "The label of the ToDo item (what should be done)."}}})
 
 (defn render-service-document [version]
@@ -269,7 +269,7 @@
     resource-defaults
 
     :exists?
-    {:profile {:schema (s/explain item-state-schema)}}
+    {:profile {:schema item-state-schema}}
 
     ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
