@@ -4,7 +4,14 @@ __This software is ALPHA.__
 
 [![Build Status](https://travis-ci.org/alexanderkiel/hap-todo.svg?branch=master)](https://travis-ci.org/alexanderkiel/hap-todo)
 
-Example ToDo Service demonstrating [HAP][2].
+Example ToDo Service demonstrating the [Hypermedia Application Protocol][2].
+
+## Hosted HAP ToDo
+
+A hosted version of HAP ToDo is available [here][3]. It's open to everyone and
+has only a volatile in-memory database. So don't expect it to hold your example
+data. The best way to try out HAP ToDo is by using the [HAP Browser][4] and
+entering `hap-todo.alexanderkiel.net` in the address bar.
 
 ## Usage with Leiningen
          
@@ -46,3 +53,5 @@ Distributed under the Eclipse Public License, the same as Clojure.
 
 [1]: <https://github.com/ddollar/foreman>
 [2]: <https://github.com/alexanderkiel/hap-spec>
+[3]: <http://hap-todo.alexanderkiel.net>
+[4]: <http://hap-browser.alexanderkiel.net>
