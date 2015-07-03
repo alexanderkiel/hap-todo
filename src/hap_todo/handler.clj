@@ -15,7 +15,8 @@
   (as-response [this _] {:body this}))
 
 (def resource-defaults
-  {:available-media-types ["application/transit+json"]
+  {:available-media-types ["application/transit+json"
+                           "application/transit+msgpack"]
 
    :as-response as-response
 
