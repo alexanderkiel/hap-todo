@@ -28,6 +28,10 @@ This application uses the following environment vars:
 If you have [foreman][1] installed you can create an `.env` file listing the
 environment vars specified above and just type `foreman start`.
 
+## Docker Image
+
+There is a docker image of HAP ToDo available on [Docker Hub][5].
+
 ## Development
 
 You can start a REPL with `lein repl`. After it is up, go into the user
@@ -55,3 +59,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [2]: <https://github.com/alexanderkiel/hap-spec>
 [3]: <http://hap-todo.alexanderkiel.net>
 [4]: <http://hap-browser.alexanderkiel.net>
+[5]: <https://registry.hub.docker.com/u/akiel/hap-todo/>
