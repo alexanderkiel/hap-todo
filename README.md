@@ -30,7 +30,10 @@ environment vars specified above and just type `foreman start`.
 
 ## Docker Image
 
-There is a docker image of HAP ToDo available on [Docker Hub][5].
+There is a docker image of HAP ToDo available on [Docker Hub][5]. You can run 
+the latest version using:
+
+    docker run -d -p 8080:80 --name hap-todo akiel/hap-todo
 
 ## Development
 
