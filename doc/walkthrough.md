@@ -8,23 +8,20 @@ discoverable through links.
 The service document of HAP Todo looks like this:
 
 ```json
-{"~:data": {
-   "~:name": "HAP ToDo",
-   "~:version": "0.1-SNAPSHOT"},
- "~:links": {
-   "~:self": {
-     "~:href": "~r/"},
-   "~:todo/items": {
-     "~:href": "~r/items"}
- },
- "~:forms": {
-   "~:todo/create-item": {
-     "~:href": "~r/items",
-     "~:title": "Create Item",
-     "~:params": {
-       "~:label": {
-         "~:type": "~SStr",
-         "~:desc": "The label of the ToDo item (what should be done)."}}}}}
+{"~:data": 
+ {"~:name": "HAP ToDo",
+  "~:version": "0.1-SNAPSHOT"},
+ "~:links":
+ {"~:self": {"~:href": "~r/"},
+  "~:todo/items": {"~:href": "~r/items"}},
+ "~:forms":
+ {"~:todo/create-item":
+  {"~:href": "~r/items",
+   "~:title": "Create Item",
+   "~:params":
+   {"~:label":
+    {"~:type": "~SStr",
+     "~:desc": "The label of the ToDo item (what should be done)."}}}}}
 ```
 
 The above JSON document is encoded using [JSON-Verbose Transit][1]. Transit 
