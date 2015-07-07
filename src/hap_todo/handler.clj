@@ -150,7 +150,7 @@
         {:up {:href (path-for :service-document-handler)}
          :self {:href (item-path path-for item)}
          :todo/item-state {:href (item-state-path path-for item)}}
-        :ops [:delete])))
+        :ops #{:delete})))
 
 (defn render-embedded-item-xf
   "Returns a transducer which maps over a coll containing maps with :id."
@@ -224,7 +224,7 @@
     {:up {:href (item-path path-for item)}
      :self {:href (item-state-path path-for item)}
      :profile {:href (path-for :item-state-profile-handler)}}
-    :ops [:update]))
+    :ops #{:update}))
 
 (def ^:private item-state-schema {:state (s/enum :active :completed)})
 

@@ -63,7 +63,7 @@
       (is (= [:id id] (:args (href resp :todo/item-state)))))
 
     (testing "contains the delete operation"
-      (is (some #{:delete} (-> resp :body :ops))))
+      (is (contains? (-> resp :body :ops) :delete)))
 
     (testing "contains an ETag"
       (is (get-in resp [:headers "ETag"]))))
@@ -96,7 +96,7 @@
       (is (= :item-state-profile-handler (:handler (href resp :profile)))))
 
     (testing "contains the update operation"
-      (is (some #{:update} (-> resp :body :ops))))
+      (is (contains? (-> resp :body :ops) :update)))
 
     (testing "contains an ETag"
       (is (get-in resp [:headers "ETag"]))))
