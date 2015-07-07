@@ -43,7 +43,7 @@
 (defn- entity-processable [schema]
   (fn [ctx]
     (or (not (l/=method :put ctx))
-        (validate schema (:new-entity ctx)))))
+        (validate schema (:data (:new-entity ctx))))))
 
 (defn- form-params-valid [schema]
   (fnk [[:request params request-method]]
@@ -51,8 +51,8 @@
         (validate schema params))))
 
 (defn- error-body [path-for msg]
-  {:links {:up {:href (path-for :service-document-handler)}}
-   :error msg})
+  {:data {:message msg}
+   :links {:up {:href (path-for :service-document-handler)}}})
 
 (defrecord StatusResponse [status response]
   Representation
@@ -113,8 +113,9 @@
 
 (defn render-service-document [version]
   (fnk [[:request path-for]]
-    {:name "HAP ToDo"
-     :version version
+    {:data
+     {:name "HAP ToDo"
+      :version version}
      :links
      {:self {:href (path-for :service-document-handler)}
       :todo/items {:href (path-for :item-list-handler)}}
@@ -144,13 +145,12 @@
 
 (defn render-embedded-item [path-for item]
   {:pre [(map? item)]}
-  (-> (dissoc item :id :rank)
-      (assoc
-        :links
-        {:up {:href (path-for :service-document-handler)}
-         :self {:href (item-path path-for item)}
-         :todo/item-state {:href (item-state-path path-for item)}}
-        :ops #{:delete})))
+  {:data (dissoc item :id :rank)
+   :links
+   {:up {:href (path-for :service-document-handler)}
+    :self {:href (item-path path-for item)}
+    :todo/item-state {:href (item-state-path path-for item)}}
+   :ops #{:delete}})
 
 (defn render-embedded-item-xf
   "Returns a transducer which maps over a coll containing maps with :id."
@@ -219,12 +219,12 @@
     (fnk [[:request path-for]] (error-body path-for "Item not found."))))
 
 (defnk render-item-state [item [:request path-for]]
-  (assoc (select-keys item [:state])
-    :links
-    {:up {:href (item-path path-for item)}
-     :self {:href (item-state-path path-for item)}
-     :profile {:href (path-for :item-state-profile-handler)}}
-    :ops #{:update}))
+  {:data (select-keys item [:state])
+   :links
+   {:up {:href (item-path path-for item)}
+    :self {:href (item-state-path path-for item)}
+    :profile {:href (path-for :item-state-profile-handler)}}
+   :ops #{:update}})
 
 (def ^:private item-state-schema {:state (s/enum :active :completed)})
 
@@ -252,7 +252,7 @@
     :put!
     (fnk [[:request db] item new-entity]
       ;;TODO check for item equality inside swap
-      (swap! db api/update-item-state item (:state new-entity)))
+      (swap! db api/update-item-state item (:state (:data new-entity))))
 
     :handle-ok render-item-state
 
@@ -260,10 +260,10 @@
     (fnk [[:request path-for]] (error-body path-for "Item not found."))))
 
 (defnk render-item-state-profile [profile [:request path-for]]
-  (assoc profile
-    :links
-    {:up {:href (path-for :service-document-handler)}
-     :self {:href (path-for :item-state-profile-handler)}}))
+  {:data profile
+   :links
+   {:up {:href (path-for :service-document-handler)}
+    :self {:href (path-for :item-state-profile-handler)}}})
 
 (def item-state-profile-handler
   (resource

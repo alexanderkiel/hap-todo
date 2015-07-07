@@ -8,30 +8,23 @@ discoverable through links.
 The service document of HAP Todo looks like this:
 
 ```json
-{
-  "~:name": "HAP ToDo",
-  "~:version": "0.1-SNAPSHOT",
-  "~:links": {
-    "~:self": {
-      "~:href": "~r/"
-    },
-    "~:todo/items": {
-      "~:href": "~r/items"
-    }
-  },
-  "~:forms": {
-    "~:todo/create-item": {
-      "~:href": "~r/items",
-      "~:title": "Create Item",
-      "~:params": {
-        "~:label": {
-          "~:type": "~SStr",
-          "~:desc": "The label of the ToDo item (what should be done)."
-        }
-      }
-    }
-  }
-}
+{"~:data": {
+   "~:name": "HAP ToDo",
+   "~:version": "0.1-SNAPSHOT"},
+ "~:links": {
+   "~:self": {
+     "~:href": "~r/"},
+   "~:todo/items": {
+     "~:href": "~r/items"}
+ },
+ "~:forms": {
+   "~:todo/create-item": {
+     "~:href": "~r/items",
+     "~:title": "Create Item",
+     "~:params": {
+       "~:label": {
+         "~:type": "~SStr",
+         "~:desc": "The label of the ToDo item (what should be done)."}}}}}
 ```
 
 The above JSON document is encoded using [JSON-Verbose Transit][1]. Transit 
@@ -41,16 +34,16 @@ of all three formats.
 
 Transit supports a rich set of data types which are encoded in JSON strings by
 tag prefixes. The first tag in the service document is `:` the colon tag. It's
-used in `"~:name"` making it a keyword instead of a string. Keywords are most
+used in `"~:data"` making it a keyword instead of a string. Keywords are most
 often used as map keys. The tilde declares a string to start with a tag. This 
-document uses a more concise representation of keywords in text were `"~:name"`
-becomes just `:name`.
+document uses a more concise representation of keywords in text were `"~:data"`
+becomes just `:data`.
 
-Every HAP representation is a map were some keys like `:link"` and `:forms` are 
-reserved. The other keys like `:name` and `:version` in the above service 
-document are application specific.
+Every HAP representation is a map. The first HAP key `:data` holds a map of 
+application-specific data. In the above case the service document conveys the
+name and version of the ToDo service.
 
-The first reversed HAP key `:links` holds a map of link relations to link maps.
+The second HAP key `:links` holds a map of link relations to link maps.
 Every HAP representation has a link with link relation `:self`. You can read 
 more about standard link relations at [IANA][2]. Link maps have at least a 
 `:href` key. In the above service document the `:href` points to `/` a relative

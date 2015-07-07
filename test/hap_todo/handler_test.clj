@@ -19,8 +19,8 @@
 (defn- embedded [resp rel]
   (-> resp :body :embedded rel))
 
-(defn- error [resp]
-  (-> resp :body :error))
+(defn- error-msg [resp]
+  (-> resp :body :data :message))
 
 (defn- location [resp]
   (edn/read-string (get-in resp [:headers "Location"])))
@@ -47,7 +47,7 @@
 (deftest item-handler-test
   (let [resp (execute item-handler :get
                :params {:id id}
-               :db (db {:id id}))]
+               :db (db {:id id :label "label-160856"}))]
 
     (is (= 200 (:status resp)))
 
@@ -66,7 +66,10 @@
       (is (contains? (-> resp :body :ops) :delete)))
 
     (testing "contains an ETag"
-      (is (get-in resp [:headers "ETag"]))))
+      (is (get-in resp [:headers "ETag"])))
+
+    (testing "contains the label"
+      (is (= "label-160856" (-> resp :body :data :label)))))
 
   (testing "Delete succeeds"
     (let [db (db {:id id})
@@ -80,7 +83,7 @@
 (deftest item-state-handler-test
   (let [resp (execute item-state-handler :get
                :params {:id id}
-               :db (db {:id id}))]
+               :db (db {:id id :state :active}))]
 
     (is (= 200 (:status resp)))
 
@@ -99,46 +102,49 @@
       (is (contains? (-> resp :body :ops) :update)))
 
     (testing "contains an ETag"
-      (is (get-in resp [:headers "ETag"]))))
+      (is (get-in resp [:headers "ETag"])))
+
+    (testing "contains the state"
+      (is (= :active (-> resp :body :data :state)))))
 
   (testing "Non-conditional update fails"
     (let [resp (execute item-state-handler :put
                  :params {:id id})]
       (is (= 400 (:status resp)))
-      (is (= "Require conditional update." (error resp)))))
+      (is (= "Require conditional update." (error-msg resp)))))
 
   (testing "Update fails on missing state"
     (let [resp (execute item-state-handler :put
                  :params {:id id}
-                 :body {}
+                 :body {:data {}}
                  [:headers "if-match"] "\"foo\"")]
       (is (= 422 (:status resp)))
       (is (= "Unprocessable Entity: {:state missing-required-key}"
-             (error resp)))))
+             (error-msg resp)))))
 
   (testing "Update fails on invalid state"
     (let [resp (execute item-state-handler :put
                  :params {:id id}
-                 :body {:state "foo"}
+                 :body {:data {:state "foo"}}
                  [:headers "if-match"] "\"foo\"")]
       (is (= 422 (:status resp)))
       (is (= "Unprocessable Entity: {:state (not (#{:completed :active} \"foo\"))}"
-             (error resp)))))
+             (error-msg resp)))))
 
   (testing "Update fails on ETag missmatch"
     (let [resp (execute item-state-handler :put
                  :params {:id id}
-                 :body {:state :active}
+                 :body {:data {:state :active}}
                  :db (db {:id id})
                  [:headers "if-match"] "\"foo\"")]
       (is (= 412 (:status resp)))
-      (is (= "Precondition Failed" (error resp)))))
+      (is (= "Precondition Failed" (error-msg resp)))))
 
   (testing "Update succeeds"
     (let [db (db {:id id})
           resp (execute item-state-handler :put
                  :params {:id id}
-                 :body {:state :active}
+                 :body {:data {:state :active}}
                  :db db
                  [:headers "if-match"] (etag db item-state-handler id))]
       (is (= 204 (:status resp)))
@@ -167,7 +173,10 @@
       (is (= :item-state-profile-handler (:handler (href resp :self)))))
 
     (testing "contains an ETag"
-      (is (get-in resp [:headers "ETag"])))))
+      (is (get-in resp [:headers "ETag"])))
+
+    (testing "contains the schema"
+      (is (-> resp :body :data :schema)))))
 
 (deftest item-list-handler-test
 
@@ -182,27 +191,27 @@
                  :db (db {:id id :label "label-021742"}))]
       (is (= 200 (:status resp)))
       (is (= 1 (count (embedded resp :todo/items))))
-      (is (= "label-021742" (:label (first (embedded resp :todo/items)))))))
+      (is (= "label-021742" (-> (first (embedded resp :todo/items)) :data :label)))))
 
   (testing "List on DB with two items orders them by insertion order"
     (let [resp (execute item-list-handler :get
                  :db (db {:id id-1 :label "a"} {:id id-2 :label "b"}))]
       (is (= 200 (:status resp)))
       (is (= 2 (count (embedded resp :todo/items))))
-      (is (= "a" (:label (first (embedded resp :todo/items)))))
-      (is (= "b" (:label (second (embedded resp :todo/items)))))))
+      (is (= "a" (-> (first (embedded resp :todo/items)) :data :label)))
+      (is (= "b" (-> (second (embedded resp :todo/items)) :data :label)))))
 
   (testing "Create without label fails"
     (let [resp (execute item-list-handler :post)]
       (is (= 422 (:status resp)))
-      (is (= "Unprocessable Entity: {:label missing-required-key}" (error resp)))))
+      (is (= "Unprocessable Entity: {:label missing-required-key}" (error-msg resp)))))
 
   (testing "Create with invalid label fails"
     (let [resp (execute item-list-handler :post
                  :params {:label :foo})]
       (is (= 422 (:status resp)))
       (is (= "Unprocessable Entity: {:label (not (instance? java.lang.String :foo))}"
-             (error resp)))))
+             (error-msg resp)))))
 
   (testing "Create succeeds"
     (let [db (db)
