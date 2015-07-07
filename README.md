@@ -13,6 +13,10 @@ has only a volatile in-memory database. So don't expect it to hold your example
 data. The best way to try out HAP ToDo is by using the [HAP Browser][4] and
 entering `hap-todo.alexanderkiel.net` in the address bar.
 
+## Walkthrough
+
+A walkthrough explaining HAP by using HAP ToDo as example is available [here][6].
+
 ## Usage with Leiningen
          
 To start the service with leiningen, run the following command
@@ -63,3 +67,4 @@ Distributed under the Eclipse Public License, the same as Clojure.
 [3]: <http://hap-todo.alexanderkiel.net>
 [4]: <http://hap-browser.alexanderkiel.net>
 [5]: <https://registry.hub.docker.com/u/akiel/hap-todo/>
+[6]: <https://github.com/alexanderkiel/hap-todo/blob/master/doc/walkthrough.md>
