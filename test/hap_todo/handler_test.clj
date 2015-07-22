@@ -148,6 +148,7 @@
                  :db db
                  [:headers "if-match"] (etag db item-state-handler id))]
       (is (= 204 (:status resp)))
+      (is (get-in resp [:headers "ETag"]))
       (is (= :active (get-in @db [:items id :state])))))
 
   (testing "Delete succeeds"

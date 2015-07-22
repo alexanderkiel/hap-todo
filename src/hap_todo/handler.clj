@@ -203,11 +203,10 @@
 
     ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
-    (fnk [representation {status 200} :as ctx]
-      (when (= 200 status)
-        (letk [[item] ctx]
-          (md5 (str (:media-type representation)
-                    (:label item))))))
+    (fnk [representation :as ctx]
+      (when-let [item (:item ctx)]
+        (md5 (str (:media-type representation)
+                  (:label item)))))
 
     :delete!
     (fnk [[:request db] item]
@@ -243,16 +242,16 @@
 
     ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
-    (fnk [representation {status 200} :as ctx]
-      (when (= 200 status)
-        (letk [[item] ctx]
-          (md5 (str (:media-type representation)
-                    (:state item))))))
+    (fnk [representation :as ctx]
+      (when-let [item (:item ctx)]
+        (md5 (str (:media-type representation)
+                  (:state item)))))
 
     :put!
     (fnk [[:request db] item new-entity]
       ;;TODO check for item equality inside swap
-      (swap! db api/update-item-state item (:state (:data new-entity))))
+      (let [db (swap! db api/update-item-state item (:state (:data new-entity)))]
+        {:item (get-in db [:items (:id item)])}))
 
     :handle-ok render-item-state
 
@@ -274,10 +273,9 @@
 
     ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
-    (fnk [representation {status 200} :as ctx]
-      (when (= 200 status)
-        (letk [[profile] ctx]
-          (md5 (str (:media-type representation) profile)))))
+    (fnk [representation :as ctx]
+      (when-let [profile (:profile ctx)]
+        (md5 (str (:media-type representation) profile))))
 
     :handle-ok render-item-state-profile
 
