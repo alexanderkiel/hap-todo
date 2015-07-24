@@ -202,6 +202,41 @@
       (is (= "a" (-> (first (embedded resp :todo/items)) :data :label)))
       (is (= "b" (-> (second (embedded resp :todo/items)) :data :label)))))
 
+  (testing "List on DB with labels [a b] returns none when filtered by 'z'"
+    (let [resp (execute item-list-handler :get
+                        :params {:label "z"}
+                        :db (db {:id id-1 :label "a"} {:id id-2 :label "b"}))]
+      (is (= 200 (:status resp)))
+      (is (= 0 (count (embedded resp :todo/items))))))
+
+  (testing "List on DB with labels [a b] returns one when filtered by 'a'"
+    (let [resp (execute item-list-handler :get
+                        :params {:label "a"}
+                        :db (db {:id id-1 :label "a"} {:id id-2 :label "b"}))]
+      (is (= 200 (:status resp)))
+      (is (= 1 (count (embedded resp :todo/items))))))
+
+  (testing "List on DB with labels [ab bc] returns all when filtered by 'b'"
+    (let [resp (execute item-list-handler :get
+                        :params {:label "b"}
+                        :db (db {:id id-1 :label "ab"} {:id id-2 :label "bc"}))]
+      (is (= 200 (:status resp)))
+      (is (= 2 (count (embedded resp :todo/items))))))
+
+  (testing "List on DB with labels [a b] returns all when filter is empty"
+    (let [resp (execute item-list-handler :get
+                        :params {:label ""}
+                        :db (db {:id id-1 :label "a"} {:id id-2 :label "b"}))]
+      (is (= 200 (:status resp)))
+      (is (= 2 (count (embedded resp :todo/items))))))
+
+  (testing "List on DB with labels [a b] returns all when filter is nil"
+    (let [resp (execute item-list-handler :get
+                        :params {:label nil}
+                        :db (db {:id id-1 :label "a"} {:id id-2 :label "b"}))]
+      (is (= 200 (:status resp)))
+      (is (= 2 (count (embedded resp :todo/items))))))
+
   (testing "Create without label fails"
     (let [resp (execute item-list-handler :post)]
       (is (= 422 (:status resp)))

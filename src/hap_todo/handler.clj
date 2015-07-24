@@ -1,6 +1,7 @@
 (ns hap-todo.handler
   (:use plumbing.core)
-  (:require [schema.core :as s]
+  (:require [clojure.string :as str]
+            [schema.core :as s]
             [liberator.core :as l :refer [resource to-location]]
             [liberator.representation :refer [Representation as-response]]
             [pandect.algo.md5 :refer [md5]]
@@ -111,6 +112,13 @@
    {:label {:type s/Str
             :desc "The label of the ToDo item (what should be done)."}}})
 
+(defn render-filter-items-query [path-for]
+  {:href (path-for :item-list-handler)
+   :title "Search Items by Label"
+   :params
+   {:label {:type s/Str
+            :desc "A string which is contained in labels of ToDo items to find."}}})
+
 (defn render-service-document [version]
   (fnk [[:request path-for]]
     {:data
@@ -121,7 +129,9 @@
       :todo/items {:href (path-for :item-list-handler)}}
      :forms
      {:todo/create-item
-      (render-create-item-form path-for)}}))
+      (render-create-item-form path-for)}
+     :queries
+     {:todo/filter-item (render-filter-items-query path-for)}}))
 
 (defn service-document-handler [version]
   (resource
@@ -154,22 +164,25 @@
 
 (defn render-embedded-item-xf
   "Returns a transducer which maps over a coll containing maps with :id."
-  [path-for db]
+  [path-for db label]
   (comp
     (map :id)
     (map (:items @db))
+    (filter (if (str/blank? label) identity #(.contains (:label %) label)))
     (map #(render-embedded-item path-for %))))
 
-(defnk render-item-list [[:request db path-for]]
+(defnk render-item-list [[:request [:params {label nil}] db path-for]]
   {:links
    {:up {:href (path-for :service-document-handler)}
     :self {:href (path-for :item-list-handler)}}
    :forms
    {:todo/create-item
     (render-create-item-form path-for)}
+   :queries
+   {:todo/filter-item (render-filter-items-query path-for)}
    :embedded
    {:todo/items
-    (into [] (render-embedded-item-xf path-for db) (:all @db))}})
+    (into [] (render-embedded-item-xf path-for db label) (:all @db))}})
 
 (def item-list-handler
   (resource
