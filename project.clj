@@ -10,7 +10,7 @@
                  [prismatic/plumbing "0.4.4"]
                  [http-kit "2.1.18"]
                  [org.clojars.akiel/ring-hap "0.1-SNAPSHOT"]
-                 [bidi "1.18.11" :exclusions [org.clojure/clojurescript
+                 [bidi "1.20.2" :exclusions [org.clojure/clojurescript
                                               com.cemerick/clojurescript.test]]
                  [liberator "0.13"]
                  [pandect "0.5.2"
