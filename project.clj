@@ -13,8 +13,7 @@
                  [bidi "1.20.2" :exclusions [org.clojure/clojurescript
                                               com.cemerick/clojurescript.test]]
                  [liberator "0.13"]
-                 [pandect "0.5.2"
-                  :exclusions [org.bouncycastle/bcprov-jdk15on potemkin]]
+                 [org.clojars.akiel/digest "0.1-SNAPSHOT"]
                  [environ "1.0.0"]]
 
   :profiles {:dev

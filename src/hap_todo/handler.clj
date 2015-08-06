@@ -4,7 +4,7 @@
             [schema.core :as s]
             [liberator.core :as l :refer [resource to-location]]
             [liberator.representation :refer [Representation as-response]]
-            [pandect.algo.md5 :refer [md5]]
+            [digest.core :as digest]
             [hap-todo.api :as api])
   (:import [java.util UUID])
   (:refer-clojure :exclude [error-handler]))
@@ -139,7 +139,7 @@
 
     :etag
     (fnk [representation]
-      (md5 (:media-type representation)))
+      (digest/md5 (:media-type representation)))
 
     :handle-ok (render-service-document version)))
 
@@ -216,8 +216,7 @@
     :etag
     (fnk [representation :as ctx]
       (when-let [item (:item ctx)]
-        (md5 (str (:media-type representation)
-                  (:label item)))))
+        (digest/md5 (:media-type representation) (:label item))))
 
     :delete!
     (fnk [[:request db] item]
@@ -255,8 +254,7 @@
     :etag
     (fnk [representation :as ctx]
       (when-let [item (:item ctx)]
-        (md5 (str (:media-type representation)
-                  (:state item)))))
+        (digest/md5 (:media-type representation) (:state item))))
 
     :put!
     (fnk [[:request db] item new-entity]
@@ -286,7 +284,7 @@
     :etag
     (fnk [representation :as ctx]
       (when-let [profile (:profile ctx)]
-        (md5 (str (:media-type representation) profile))))
+        (digest/md5 (:media-type representation) profile)))
 
     :handle-ok render-item-state-profile
 
