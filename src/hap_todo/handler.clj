@@ -138,10 +138,8 @@
     resource-defaults
 
     :etag
-    (fnk [representation [:request path-for]]
-      (md5 (str (:media-type representation)
-                (path-for :service-document-handler)
-                (path-for :item-list-handler))))
+    (fnk [representation]
+      (md5 (:media-type representation)))
 
     :handle-ok (render-service-document version)))
 
