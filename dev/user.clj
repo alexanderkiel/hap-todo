@@ -3,18 +3,18 @@
             [clojure.repl :refer :all]
             [clojure.tools.namespace.repl :refer [refresh]]
             [environ.core :refer [env]]
-            [hap-todo.system :as s]))
+            [hap-todo.system :as system]))
 
 (def system nil)
 
 (defn init []
-  (alter-var-root #'system (constantly (s/create env))))
+  (alter-var-root #'system (constantly (system/create env))))
 
 (defn start []
-  (alter-var-root #'system s/start))
+  (alter-var-root #'system system/start))
 
 (defn stop []
-  (alter-var-root #'system s/stop))
+  (alter-var-root #'system system/stop))
 
 (defn startup []
   (init)
