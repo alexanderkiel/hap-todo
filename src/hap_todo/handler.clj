@@ -143,7 +143,7 @@
 
     :handle-ok (render-service-document version)))
 
-;; ---- Handlers --------------------------------------------------------------
+;; ---- Items -----------------------------------------------------------------
 
 (defn item-path [path-for item]
   (path-for :item-handler :id (:id item)))
