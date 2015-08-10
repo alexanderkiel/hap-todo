@@ -9,7 +9,7 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [prismatic/plumbing "0.4.4"]
                  [http-kit "2.1.18"]
-                 [org.clojars.akiel/ring-hap "0.1"]
+                 [org.clojars.akiel/ring-hap "0.2"]
                  [bidi "1.20.2" :exclusions [org.clojure/clojurescript
                                               com.cemerick/clojurescript.test]]
                  [liberator "0.13"]
