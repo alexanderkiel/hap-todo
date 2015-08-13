@@ -212,7 +212,6 @@
       (when-let [item (get-in @db [:items id])]
         {:item item}))
 
-    ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
     (fnk [representation :as ctx]
       (when-let [item (:item ctx)]
@@ -250,7 +249,6 @@
 
     :processable? (entity-processable item-state-schema)
 
-    ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
     (fnk [representation :as ctx]
       (when-let [item (:item ctx)]
@@ -280,7 +278,6 @@
     :exists?
     {:profile {:schema item-state-schema}}
 
-    ;;TODO: simplyfy when https://github.com/clojure-liberator/liberator/issues/219 is closed
     :etag
     (fnk [representation :as ctx]
       (when-let [profile (:profile ctx)]
