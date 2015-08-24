@@ -19,6 +19,12 @@
 (defn- embedded [resp rel]
   (-> resp :body :embedded rel))
 
+(defn- query [resp rel]
+  (-> resp :body :queries rel))
+
+(defn- form [resp rel]
+  (-> resp :body :forms rel))
+
 (defn- error-msg [resp]
   (-> resp :body :data :message))
 
@@ -180,6 +186,18 @@
       (is (-> resp :body :data :schema)))))
 
 (deftest item-list-handler-test
+
+  (testing "List contains filter query"
+    (let [resp (execute item-list-handler :get
+                        :db (db))]
+      (is (query resp :todo/filter-item))
+      (is (= (:label (query resp :todo/filter-item)) "Search Items by Label"))))
+
+  (testing "List contains create form"
+    (let [resp (execute item-list-handler :get
+                        :db (db))]
+      (is (form resp :todo/create-item))
+      (is (= (:label (form resp :todo/create-item)) "Create Item"))))
 
   (testing "List on empty DB return an empty list"
     (let [resp (execute item-list-handler :get

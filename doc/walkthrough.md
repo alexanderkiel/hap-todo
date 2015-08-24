@@ -17,7 +17,7 @@ The service document of HAP Todo looks like this:
  "~:forms":
  {"~:todo/create-item":
   {"~:href": "~r/items",
-   "~:title": "Create Item",
+   "~:label": "Create Item",
    "~:params":
    {"~:label":
     {"~:type": "~SStr",
