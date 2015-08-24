@@ -110,14 +110,14 @@
    :label "Create Item"
    :params
    {:label {:type s/Str
-            :desc "The label of the ToDo item (what should be done)."}}})
+            :label "The label of the ToDo item (what should be done)."}}})
 
 (defn render-filter-items-query [path-for]
   {:href (path-for :item-list-handler)
    :label "Search Items by Label"
    :params
    {:label {:type s/Str
-            :desc "A string which is contained in labels of ToDo items to find."}}})
+            :label "A string which is contained in labels of ToDo items to find."}}})
 
 (defn render-service-document [version]
   (fnk [[:request path-for]]

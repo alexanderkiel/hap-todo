@@ -21,7 +21,7 @@ The service document of HAP Todo looks like this:
    "~:params":
    {"~:label":
     {"~:type": "~SStr",
-     "~:desc": "The label of the ToDo item (what should be done)."}}}}}
+     "~:label": "The label of the ToDo item (what should be done)."}}}}}
 ```
 
 The above JSON document is encoded using [JSON-Verbose Transit][1]. Transit 
