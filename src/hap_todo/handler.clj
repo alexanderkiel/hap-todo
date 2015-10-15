@@ -107,17 +107,17 @@
 
 (defn render-create-item-form [path-for]
   {:href (path-for :item-list-handler)
-   :title "Create Item"
+   :label "Create Item"
    :params
    {:label {:type s/Str
-            :desc "The label of the ToDo item (what should be done)."}}})
+            :label "The label of the ToDo item (what should be done)."}}})
 
 (defn render-filter-items-query [path-for]
   {:href (path-for :item-list-handler)
-   :title "Search Items by Label"
+   :label "Search Items by Label"
    :params
    {:label {:type s/Str
-            :desc "A string which is contained in labels of ToDo items to find."}}})
+            :label "A string which is contained in labels of ToDo items to find."}}})
 
 (defn render-service-document [version]
   (fnk [[:request path-for]]

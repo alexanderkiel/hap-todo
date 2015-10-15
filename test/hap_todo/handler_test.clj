@@ -19,6 +19,12 @@
 (defn- embedded [resp rel]
   (-> resp :body :embedded rel))
 
+(defn- query [resp rel]
+  (-> resp :body :queries rel))
+
+(defn- form [resp rel]
+  (-> resp :body :forms rel))
+
 (defn- error-msg [resp]
   (-> resp :body :data :message))
 
@@ -180,6 +186,24 @@
       (is (-> resp :body :data :schema)))))
 
 (deftest item-list-handler-test
+
+(testing "List contains filter query with param and label"
+    (let [resp (execute item-list-handler :get
+                        :db (db))]
+      (is (query resp :todo/filter-item))
+      (is (= (:label (query resp :todo/filter-item)) "Search Items by Label"))
+      (is (:label (:params (query resp :todo/filter-item))))
+      (is (= (:label (:label (:params (query resp :todo/filter-item)))))
+          "A string which is contained in labels of ToDo items to find.")))
+
+(testing "List contains create form with param and label"
+    (let [resp (execute item-list-handler :get
+                        :db (db))]
+      (is (form resp :todo/create-item))
+      (is (= (:label (form resp :todo/create-item)) "Create Item"))
+      (is (:label (:params (form resp :todo/create-item))))
+      (is (= (:label (:label (:params (form resp :todo/create-item))))
+             "The label of the ToDo item (what should be done)."))))
 
   (testing "List on empty DB return an empty list"
     (let [resp (execute item-list-handler :get
