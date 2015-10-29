@@ -8,6 +8,7 @@
 (def system nil)
 
 (defn init []
+  (assert (nil? system))
   (alter-var-root #'system (constantly (system/create env))))
 
 (defn start []
